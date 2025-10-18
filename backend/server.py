@@ -145,6 +145,9 @@ async def sync_page(notion: AsyncClient, page_id: str):
         title = await get_page_title(page)
         content = await get_blocks_content(notion, page_id)
         
+        # Mark as permission error if content is empty
+        has_permission_error = len(content.strip()) == 0
+        
         await db.synced_pages.update_one(
             {"id": page_id},
             {"$set": {
@@ -152,7 +155,8 @@ async def sync_page(notion: AsyncClient, page_id: str):
                 "title": title,
                 "content": content,
                 "last_synced": datetime.now(timezone.utc).isoformat(),
-                "url": page.get("url")
+                "url": page.get("url"),
+                "has_permission_error": has_permission_error
             }},
             upsert=True
         )
