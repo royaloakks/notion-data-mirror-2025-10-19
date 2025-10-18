@@ -209,20 +209,30 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="text-2xl">Your Notion Workspace</CardTitle>
             <CardDescription className="text-base">
-              Toggle the switch to include pages and databases in sync
+              {filter === "all" && "Toggle the switch to include pages and databases in sync"}
+              {filter === "page" && "Showing pages only - toggle to include in sync"}
+              {filter === "database" && "Showing databases only - all entries within will be synced"}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-center py-12 text-slate-600">Loading workspace items...</div>
-            ) : items.length === 0 ? (
+            ) : filteredItems.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-slate-600 mb-2">No items found</p>
-                <p className="text-sm text-slate-500">Make sure you've shared pages/databases with your integration</p>
+                <p className="text-slate-600 mb-2">
+                  {filter === "all" 
+                    ? "No items found" 
+                    : `No ${filter}s found`}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {filter === "all" 
+                    ? "Make sure you've shared pages/databases with your integration"
+                    : "Try selecting 'All' to see other types"}
+                </p>
               </div>
             ) : (
               <div className="space-y-1">
-                {items.map((item, index) => (
+                {filteredItems.map((item, index) => (
                   <div key={item.id}>
                     {index > 0 && <Separator />}
                     <div
