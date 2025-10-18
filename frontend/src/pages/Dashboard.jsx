@@ -72,6 +72,21 @@ export default function Dashboard() {
   };
 
   const syncedItems = items.filter(item => item.synced);
+  
+  const formatLastSync = (isoString) => {
+    if (!isoString) return "Never";
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} min ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -85,6 +100,9 @@ export default function Dashboard() {
             <div>
               <h1 className="text-3xl lg:text-4xl font-bold text-slate-800">Notion Sync Dashboard</h1>
               <p className="text-slate-600">Manage your Notion workspace sync preferences</p>
+              {status.last_sync && (
+                <p className="text-sm text-slate-500">Last sync: {formatLastSync(status.last_sync)}</p>
+              )}
             </div>
           </div>
         </div>
