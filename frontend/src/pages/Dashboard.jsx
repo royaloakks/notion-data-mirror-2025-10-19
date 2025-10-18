@@ -117,7 +117,7 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Total Items</p>
+                  <p className="text-sm text-slate-600">Total Sources</p>
                   <p className="text-2xl font-bold text-slate-800">{items.length}</p>
                 </div>
                 <FileText className="w-8 h-8 text-blue-500" />
@@ -129,7 +129,7 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Synced Items</p>
+                  <p className="text-sm text-slate-600">Sources Selected</p>
                   <p className="text-2xl font-bold text-slate-800">{syncedItems.length}</p>
                 </div>
                 <CheckCircle2 className="w-8 h-8 text-teal-500" />
@@ -141,7 +141,7 @@ export default function Dashboard() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-600">Content Ready</p>
+                  <p className="text-sm text-slate-600">Readable Sources</p>
                   <p className="text-2xl font-bold text-slate-800">{status.total_synced || 0}</p>
                 </div>
                 <Database className="w-8 h-8 text-purple-500" />
