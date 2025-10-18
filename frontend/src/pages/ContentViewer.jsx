@@ -157,15 +157,27 @@ export default function ContentViewer() {
                   </CardHeader>
                   <Separator />
                   <CardContent className="pt-6">
-                    <div className="prose prose-slate max-w-none">
-                      {selectedItem.content ? (
+                    {selectedItem.content ? (
+                      <div className="prose prose-slate max-w-none">
                         <div className="whitespace-pre-wrap text-slate-700 leading-relaxed">
                           <ReactMarkdown>{selectedItem.content}</ReactMarkdown>
                         </div>
-                      ) : (
-                        <p className="text-slate-500 italic">No content available</p>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-6 max-w-2xl mx-auto">
+                          <p className="text-amber-900 font-medium mb-2">⚠️ No Content Available</p>
+                          <p className="text-sm text-amber-800 mb-3">
+                            This item appears to be a <strong>database view or linked database</strong> rather than a regular page. 
+                            It may show up in your workspace but doesn't have readable block content.
+                          </p>
+                          <p className="text-sm text-amber-700">
+                            <strong>Tip:</strong> If this is a database, look for the actual database entry (not the view) 
+                            in your workspace list and sync that instead.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ) : (
