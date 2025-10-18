@@ -174,6 +174,36 @@ export default function Dashboard() {
           </Button>
         </div>
 
+        {/* Filter Buttons */}
+        <div className="flex gap-2 mb-6">
+          <Button
+            data-testid="filter-all"
+            onClick={() => setFilter("all")}
+            variant={filter === "all" ? "default" : "outline"}
+            className={filter === "all" ? "bg-slate-800" : ""}
+          >
+            All ({items.length})
+          </Button>
+          <Button
+            data-testid="filter-pages"
+            onClick={() => setFilter("page")}
+            variant={filter === "page" ? "default" : "outline"}
+            className={filter === "page" ? "bg-blue-500" : ""}
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Pages ({items.filter(i => i.item_type === 'page').length})
+          </Button>
+          <Button
+            data-testid="filter-databases"
+            onClick={() => setFilter("database")}
+            variant={filter === "database" ? "default" : "outline"}
+            className={filter === "database" ? "bg-purple-500" : ""}
+          >
+            <Database className="w-4 h-4 mr-2" />
+            Databases ({items.filter(i => i.item_type === 'database').length})
+          </Button>
+        </div>
+
         {/* Items List */}
         <Card className="border-0 shadow-xl">
           <CardHeader>
