@@ -161,11 +161,57 @@ async def sync_page(notion: AsyncClient, page_id: str):
         logger.error(f"Error syncing page {page_id}: {e}")
         return False
 
+async def extract_property_value(prop_value):
+    """Extract readable value from a Notion property"""
+    prop_type = prop_value.get("type")
+    
+    if prop_type == "title":
+        return await extract_text_from_rich_text(prop_value.get("title", []))
+    elif prop_type == "rich_text":
+        return await extract_text_from_rich_text(prop_value.get("rich_text", []))
+    elif prop_type == "number":
+        return str(prop_value.get("number", ""))
+    elif prop_type == "select":
+        select = prop_value.get("select")
+        return select.get("name", "") if select else ""
+    elif prop_type == "multi_select":
+        items = prop_value.get("multi_select", [])
+        return ", ".join([item.get("name", "") for item in items])
+    elif prop_type == "date":
+        date_obj = prop_value.get("date")
+        if date_obj:
+            start = date_obj.get("start", "")
+            end = date_obj.get("end", "")
+            return f"{start} to {end}" if end else start
+        return ""
+    elif prop_type == "people":
+        people = prop_value.get("people", [])
+        return ", ".join([person.get("name", "") for person in people])
+    elif prop_type == "url":
+        return prop_value.get("url", "")
+    elif prop_type == "email":
+        return prop_value.get("email", "")
+    elif prop_type == "phone_number":
+        return prop_value.get("phone_number", "")
+    elif prop_type == "checkbox":
+        return "Yes" if prop_value.get("checkbox") else "No"
+    elif prop_type == "status":
+        status = prop_value.get("status")
+        return status.get("name", "") if status else ""
+    elif prop_type == "files":
+        files = prop_value.get("files", [])
+        return ", ".join([f.get("name", "") for f in files])
+    else:
+        return ""
+
 async def sync_database(notion: AsyncClient, database_id: str):
     try:
         database = await notion.databases.retrieve(database_id=database_id)
         title_array = database.get("title", [])
         title = await extract_text_from_rich_text(title_array)
+        
+        # Get database properties schema
+        db_properties = database.get("properties", {})
         
         # Query database entries
         results = await notion.databases.query(database_id=database_id)
@@ -173,10 +219,31 @@ async def sync_database(notion: AsyncClient, database_id: str):
         
         for page in results.get("results", []):
             entry_title = await get_page_title(page)
+            entry_parts = [f"### {entry_title}\n"]
+            
+            # Extract all properties
+            properties = page.get("properties", {})
+            property_lines = []
+            
+            for prop_name, prop_value in properties.items():
+                if prop_value.get("type") != "title":  # Skip title as we already have it
+                    value = await extract_property_value(prop_value)
+                    if value:
+                        property_lines.append(f"- **{prop_name}**: {value}")
+            
+            if property_lines:
+                entry_parts.append("\n".join(property_lines))
+                entry_parts.append("\n\n")
+            
+            # Get block content if any
             entry_content = await get_blocks_content(notion, page["id"])
-            entries.append(f"### {entry_title}\n{entry_content}\n")
+            if entry_content.strip():
+                entry_parts.append(entry_content)
+            
+            entry_parts.append("\n")
+            entries.append("".join(entry_parts))
         
-        content = "\n".join(entries)
+        content = "\n".join(entries) if entries else "No entries in this database."
         
         await db.synced_databases.update_one(
             {"id": database_id},
