@@ -213,35 +213,47 @@ async def sync_database(notion: AsyncClient, database_id: str):
         # Get database properties schema
         db_properties = database.get("properties", {})
         
-        # Query database entries
-        results = await notion.databases.query(database_id=database_id)
+        # Query database entries with pagination
         entries = []
+        has_more = True
+        start_cursor = None
         
-        for page in results.get("results", []):
-            entry_title = await get_page_title(page)
-            entry_parts = [f"### {entry_title}\n"]
+        while has_more:
+            query_params = {"database_id": database_id}
+            if start_cursor:
+                query_params["start_cursor"] = start_cursor
             
-            # Extract all properties
-            properties = page.get("properties", {})
-            property_lines = []
+            results = await notion.databases.query(**query_params)
             
-            for prop_name, prop_value in properties.items():
-                if prop_value.get("type") != "title":  # Skip title as we already have it
-                    value = await extract_property_value(prop_value)
-                    if value:
-                        property_lines.append(f"- **{prop_name}**: {value}")
+            for page in results.get("results", []):
+                entry_title = await get_page_title(page)
+                entry_parts = [f"### {entry_title}\n"]
+                
+                # Extract all properties
+                properties = page.get("properties", {})
+                property_lines = []
+                
+                for prop_name, prop_value in properties.items():
+                    if prop_value.get("type") != "title":  # Skip title as we already have it
+                        value = await extract_property_value(prop_value)
+                        if value:
+                            property_lines.append(f"- **{prop_name}**: {value}")
+                
+                if property_lines:
+                    entry_parts.append("\n".join(property_lines))
+                    entry_parts.append("\n\n")
+                
+                # Get block content if any
+                entry_content = await get_blocks_content(notion, page["id"])
+                if entry_content.strip():
+                    entry_parts.append(entry_content)
+                
+                entry_parts.append("\n")
+                entries.append("".join(entry_parts))
             
-            if property_lines:
-                entry_parts.append("\n".join(property_lines))
-                entry_parts.append("\n\n")
-            
-            # Get block content if any
-            entry_content = await get_blocks_content(notion, page["id"])
-            if entry_content.strip():
-                entry_parts.append(entry_content)
-            
-            entry_parts.append("\n")
-            entries.append("".join(entry_parts))
+            # Check pagination
+            has_more = results.get("has_more", False)
+            start_cursor = results.get("next_cursor")
         
         content = "\n".join(entries) if entries else "No entries in this database."
         
