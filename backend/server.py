@@ -448,6 +448,10 @@ async def get_status():
     synced_pages_count = await db.synced_pages.count_documents({})
     synced_databases_count = await db.synced_databases.count_documents({})
     
+    # Count items with permission errors (empty content)
+    empty_pages = await db.synced_pages.count_documents({"$expr": {"$lt": [{"$strLenCP": "$content"}, 10]}})
+    empty_databases = await db.synced_databases.count_documents({"$expr": {"$lt": [{"$strLenCP": "$content"}, 50]}})
+    
     # Get last sync time
     last_sync = None
     latest_page = await db.synced_pages.find_one({}, sort=[("last_synced", -1)])
@@ -467,7 +471,8 @@ async def get_status():
         "synced_databases": synced_databases_count,
         "total_synced": synced_pages_count + synced_databases_count,
         "last_sync": last_sync,
-        "enabled_syncs": enabled_syncs
+        "enabled_syncs": enabled_syncs,
+        "items_with_errors": empty_pages + empty_databases
     }
 
 # Include the router in the main app
