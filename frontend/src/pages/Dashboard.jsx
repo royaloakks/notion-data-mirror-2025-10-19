@@ -73,6 +73,9 @@ export default function Dashboard() {
   };
 
   const syncedItems = items.filter(item => item.synced);
+  const filteredItems = filter === "all" 
+    ? items 
+    : items.filter(item => item.item_type === filter);
   
   const formatLastSync = (isoString) => {
     if (!isoString) return "Never";
