@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [status, setStatus] = useState({});
+  const [filter, setFilter] = useState("all"); // all, page, database
   const navigate = useNavigate();
 
   useEffect(() => {
