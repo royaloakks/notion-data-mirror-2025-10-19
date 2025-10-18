@@ -432,11 +432,26 @@ async def get_status():
     synced_pages_count = await db.synced_pages.count_documents({})
     synced_databases_count = await db.synced_databases.count_documents({})
     
+    # Get last sync time
+    last_sync = None
+    latest_page = await db.synced_pages.find_one({}, sort=[("last_synced", -1)])
+    latest_db = await db.synced_databases.find_one({}, sort=[("last_synced", -1)])
+    
+    if latest_page or latest_db:
+        page_time = latest_page.get("last_synced") if latest_page else ""
+        db_time = latest_db.get("last_synced") if latest_db else ""
+        last_sync = max(page_time, db_time) if page_time and db_time else (page_time or db_time)
+    
+    # Get enabled sync count
+    enabled_syncs = await db.sync_selections.count_documents({"enabled": True})
+    
     return {
         "has_key": has_key,
         "synced_pages": synced_pages_count,
         "synced_databases": synced_databases_count,
-        "total_synced": synced_pages_count + synced_databases_count
+        "total_synced": synced_pages_count + synced_databases_count,
+        "last_sync": last_sync,
+        "enabled_syncs": enabled_syncs
     }
 
 # Include the router in the main app
