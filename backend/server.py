@@ -669,6 +669,234 @@ async def get_chatgpt_readable_content():
 # Include the router in the main app
 app.include_router(api_router)
 
+# Public readable endpoint at root level (not under /api/)
+@app.get("/readable", response_class=HTMLResponse)
+async def get_readable_notion_content():
+    """
+    Public static HTML page with all synced content at root level
+    Optimized for ChatGPT and other AI assistants to read
+    Protected from search engines with meta tags
+    """
+    try:
+        pages = await db.synced_pages.find({}, {"_id": 0}).to_list(1000)
+        databases = await db.synced_databases.find({}, {"_id": 0}).to_list(1000)
+        
+        html_parts = ["""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="googlebot" content="noindex, nofollow">
+    <meta http-equiv="X-Robots-Tag" content="noindex, nofollow">
+    <title>Notion Synced Content</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.6;
+            color: #1f2937;
+            background: #ffffff;
+        }
+        h1 {
+            color: #111827;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #1f2937;
+            margin-top: 40px;
+            padding: 15px;
+            background: #f3f4f6;
+            border-left: 4px solid #3b82f6;
+        }
+        h3 {
+            color: #374151;
+            margin-top: 30px;
+            font-size: 1.5em;
+        }
+        .content-section {
+            margin-bottom: 50px;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .metadata {
+            color: #6b7280;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .content-body {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.8;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+        .database-badge {
+            background: #e9d5ff;
+            color: #6b21a8;
+        }
+        a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .toc {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+            border: 1px solid #e5e7eb;
+        }
+        .toc h2 {
+            margin-top: 0;
+            background: none;
+            padding: 0;
+            border: none;
+            font-size: 1.3em;
+        }
+        .toc ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .toc li {
+            padding: 5px 0;
+        }
+        .toc a {
+            color: #374151;
+        }
+        .privacy-notice {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="privacy-notice">
+        🔒 <strong>Private Content:</strong> This page is not indexed by search engines and is only accessible via direct link.
+    </div>
+    
+    <h1>📚 Notion Synced Content</h1>
+    <p>This page contains all synced Notion content in a format readable by ChatGPT and other AI assistants.</p>
+    
+    <div class="toc">
+        <h2>📋 Table of Contents</h2>
+        <ul>
+"""]
+        
+        # Add TOC entries
+        toc_entries = []
+        for page in pages:
+            if page.get("content", "").strip():
+                toc_entries.append(f'<li><a href="#page-{page["id"]}">📄 {page["title"]}</a></li>')
+        
+        for database in databases:
+            if database.get("content", "").strip():
+                toc_entries.append(f'<li><a href="#db-{database["id"]}">🗄️ {database["title"]}</a></li>')
+        
+        html_parts.append("\n".join(toc_entries))
+        html_parts.append("""
+        </ul>
+    </div>
+    
+    <hr style="margin: 40px 0; border: none; border-top: 2px solid #e5e7eb;">
+""")
+        
+        # Add pages content
+        if pages:
+            html_parts.append("<h2>📄 Pages</h2>")
+            for page in pages:
+                content = page.get("content", "").strip()
+                if not content:
+                    continue
+                    
+                html_parts.append(f"""
+    <div class="content-section" id="page-{page['id']}">
+        <h3>{page['title']}</h3>
+        <div class="metadata">
+            <span class="badge">page</span>
+            <span>Last synced: {page.get('last_synced', 'Unknown')}</span>
+            {f'<a href="{page["url"]}" target="_blank" rel="noopener noreferrer">View in Notion →</a>' if page.get('url') else ''}
+        </div>
+        <div class="content-body">{content}</div>
+    </div>
+""")
+        
+        # Add databases content
+        if databases:
+            html_parts.append("<h2>🗄️ Databases</h2>")
+            for database in databases:
+                content = database.get("content", "").strip()
+                if not content:
+                    continue
+                    
+                html_parts.append(f"""
+    <div class="content-section" id="db-{database['id']}">
+        <h3>{database['title']}</h3>
+        <div class="metadata">
+            <span class="badge database-badge">database</span>
+            <span>Last synced: {database.get('last_synced', 'Unknown')}</span>
+            {f'<a href="{database["url"]}" target="_blank" rel="noopener noreferrer">View in Notion →</a>' if database.get('url') else ''}
+        </div>
+        <div class="content-body">{content}</div>
+    </div>
+""")
+        
+        html_parts.append("""
+    <hr style="margin: 60px 0; border: none; border-top: 2px solid #e5e7eb;">
+    <footer style="text-align: center; color: #9ca3af; font-size: 0.9em; padding: 20px 0;">
+        <p>🔒 This page is generated from your Notion workspace and updates after each sync.</p>
+        <p>Content is private and not indexed by search engines.</p>
+    </footer>
+</body>
+</html>
+""")
+        
+        html_response = HTMLResponse(content="".join(html_parts))
+        # Add extra security headers
+        html_response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        return html_response
+        
+    except Exception as e:
+        logger.error(f"Error generating readable notion content: {e}")
+        error_response = HTMLResponse(content=f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error</title>
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+    <h1>Error Loading Content</h1>
+    <p>There was an error loading your synced content: {str(e)}</p>
+</body>
+</html>
+""", status_code=500)
+        error_response.headers["X-Robots-Tag"] = "noindex, nofollow"
+        return error_response
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
