@@ -672,6 +672,55 @@ async def get_chatgpt_readable_content():
         error_response.headers["X-Robots-Tag"] = "noindex, nofollow"
         return error_response
 
+@api_router.get("/notion/markdown", response_class=PlainTextResponse)
+async def get_markdown_content():
+    """
+    Plain text/markdown export of all synced content
+    This bypasses any JSON middleware and should be readable by ChatGPT
+    """
+    try:
+        pages = await db.synced_pages.find({}, {"_id": 0}).to_list(1000)
+        databases = await db.synced_databases.find({}, {"_id": 0}).to_list(1000)
+        
+        content_parts = ["# Notion Synced Content\n\n"]
+        content_parts.append("🔒 **Private Content** - Not indexed by search engines\n\n")
+        content_parts.append("---\n\n")
+        
+        # Add pages
+        if pages:
+            content_parts.append("## 📄 Pages\n\n")
+            for page in pages:
+                content = page.get("content", "").strip()
+                if not content:
+                    continue
+                content_parts.append(f"### {page['title']}\n\n")
+                content_parts.append(f"*Last synced: {page.get('last_synced', 'Unknown')}*\n\n")
+                content_parts.append(f"{content}\n\n")
+                content_parts.append("---\n\n")
+        
+        # Add databases
+        if databases:
+            content_parts.append("## 🗄️ Databases\n\n")
+            for database in databases:
+                content = database.get("content", "").strip()
+                if not content:
+                    continue
+                content_parts.append(f"### {database['title']}\n\n")
+                content_parts.append(f"*Last synced: {database.get('last_synced', 'Unknown')}*\n\n")
+                content_parts.append(f"{content}\n\n")
+                content_parts.append("---\n\n")
+        
+        markdown_content = "".join(content_parts)
+        response = PlainTextResponse(content=markdown_content)
+        response.headers["Content-Type"] = "text/plain; charset=utf-8"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error generating markdown content: {e}")
+        return PlainTextResponse(content=f"Error loading content: {str(e)}", status_code=500)
+
+
 # Public readable endpoint at root level - MUST be before include_router
 @app.get("/readable", response_class=HTMLResponse)
 async def get_readable_notion_content():
