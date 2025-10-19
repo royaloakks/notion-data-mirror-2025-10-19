@@ -651,11 +651,14 @@ async def get_chatgpt_readable_content():
 </html>
 """)
         
-        return "".join(html_parts)
+        html_response = HTMLResponse(content="".join(html_parts))
+        html_response.headers["Content-Type"] = "text/html; charset=utf-8"
+        html_response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        return html_response
         
     except Exception as e:
         logger.error(f"Error generating ChatGPT readable content: {e}")
-        return HTMLResponse(content=f"""
+        error_response = HTMLResponse(content=f"""
 <!DOCTYPE html>
 <html>
 <head><title>Error</title></head>
@@ -665,6 +668,9 @@ async def get_chatgpt_readable_content():
 </body>
 </html>
 """, status_code=500)
+        error_response.headers["Content-Type"] = "text/html; charset=utf-8"
+        error_response.headers["X-Robots-Tag"] = "noindex, nofollow"
+        return error_response
 
 # Public readable endpoint at root level - MUST be before include_router
 @app.get("/readable", response_class=HTMLResponse)
