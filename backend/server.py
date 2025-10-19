@@ -715,6 +715,10 @@ async def get_markdown_content():
         response.headers["Content-Type"] = "text/plain; charset=utf-8"
         response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
         return response
+        
+    except Exception as e:
+        logger.error(f"Error generating markdown content: {e}")
+        return PlainTextResponse(content=f"Error loading content: {str(e)}", status_code=500)
 
 @api_router.get("/notion/chatgpt-readable.txt", response_class=PlainTextResponse)
 async def get_text_content():
