@@ -203,13 +203,13 @@ export default function ContentViewer() {
                 To query this content with ChatGPT, tell it to browse this URL:
               </p>
               <div className="bg-white p-3 rounded border border-teal-300 font-mono text-sm break-all">
-                {window.location.origin}/api/notion/chatgpt-readable
+                {window.location.origin}/notion-content
               </div>
               <p className="text-sm text-teal-700 mt-3">
-                This special page is optimized for ChatGPT to read without JavaScript. ChatGPT will be able to read all your synced Notion content and answer questions about it!
+                This public page is optimized for ChatGPT to read without JavaScript. ChatGPT will be able to read all your synced Notion content and answer questions about it!
               </p>
               <p className="text-xs text-teal-600 mt-2">
-                💡 <strong>Tip:</strong> You can also use this URL directly in your browser to see exactly what ChatGPT sees.
+                💡 <strong>Example prompt:</strong> "Browse {window.location.origin}/notion-content and tell me about [your question]"
               </p>
             </CardContent>
           </Card>
