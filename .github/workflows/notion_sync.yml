@@ -1,0 +1,25 @@
+name: Sync Notion Data
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"  # runs every 6 hours
+  workflow_dispatch:       # allows manual triggering
+
+jobs:
+  update-html:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fetch latest Notion data from Emergent
+        run: |
+          curl -L "https://gpt-notion-connect.preview.emergentagent.com/" -o index.html
+
+      - name: Commit and push updated HTML
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Auto-update Notion data from Emergent" || echo "No changes to commit"
+          git push
