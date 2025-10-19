@@ -715,6 +715,57 @@ async def get_markdown_content():
         response.headers["Content-Type"] = "text/plain; charset=utf-8"
         response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
         return response
+
+@api_router.get("/notion/chatgpt-readable.txt", response_class=PlainTextResponse)
+async def get_text_content():
+    """
+    Plain text export with .txt extension to bypass JSON middleware
+    """
+    try:
+        pages = await db.synced_pages.find({}, {"_id": 0}).to_list(1000)
+        databases = await db.synced_databases.find({}, {"_id": 0}).to_list(1000)
+        
+        content_parts = ["NOTION SYNCED CONTENT\n"]
+        content_parts.append("=" * 80 + "\n\n")
+        content_parts.append("PRIVATE CONTENT - Not indexed by search engines\n\n")
+        content_parts.append("-" * 80 + "\n\n")
+        
+        # Add pages
+        if pages:
+            content_parts.append("PAGES\n")
+            content_parts.append("=" * 80 + "\n\n")
+            for page in pages:
+                content = page.get("content", "").strip()
+                if not content:
+                    continue
+                content_parts.append(f"{page['title']}\n")
+                content_parts.append(f"Last synced: {page.get('last_synced', 'Unknown')}\n\n")
+                content_parts.append(f"{content}\n\n")
+                content_parts.append("-" * 80 + "\n\n")
+        
+        # Add databases
+        if databases:
+            content_parts.append("DATABASES\n")
+            content_parts.append("=" * 80 + "\n\n")
+            for database in databases:
+                content = database.get("content", "").strip()
+                if not content:
+                    continue
+                content_parts.append(f"{database['title']}\n")
+                content_parts.append(f"Last synced: {database.get('last_synced', 'Unknown')}\n\n")
+                content_parts.append(f"{content}\n\n")
+                content_parts.append("-" * 80 + "\n\n")
+        
+        text_content = "".join(content_parts)
+        response = PlainTextResponse(content=text_content)
+        response.headers["Content-Type"] = "text/plain; charset=utf-8"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error generating text content: {e}")
+        return PlainTextResponse(content=f"Error loading content: {str(e)}", status_code=500)
+
         
     except Exception as e:
         logger.error(f"Error generating markdown content: {e}")
