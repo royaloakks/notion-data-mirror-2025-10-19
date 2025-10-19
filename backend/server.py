@@ -666,10 +666,7 @@ async def get_chatgpt_readable_content():
 </html>
 """, status_code=500)
 
-# Include the router in the main app
-app.include_router(api_router)
-
-# Public readable endpoint at root level (not under /api/)
+# Public readable endpoint at root level - MUST be before include_router
 @app.get("/readable", response_class=HTMLResponse)
 async def get_readable_notion_content():
     """
@@ -896,6 +893,9 @@ async def get_readable_notion_content():
 """, status_code=500)
         error_response.headers["X-Robots-Tag"] = "noindex, nofollow"
         return error_response
+
+# Include the router in the main app
+app.include_router(api_router)
 
 app.add_middleware(
     CORSMiddleware,
