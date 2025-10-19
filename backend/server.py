@@ -476,7 +476,7 @@ async def get_status():
         "items_with_errors": empty_pages + empty_databases
     }
 
-@api_router.get("/notion/chatgpt-readable", response_class=HTMLResponse)
+@api_router.get("/notion/chatgpt-readable", response_class=HTMLResponse, responses={200: {"content": {"text/html": {}}}})
 async def get_chatgpt_readable_content():
     """
     Static HTML page with all synced content that ChatGPT can read without JavaScript
