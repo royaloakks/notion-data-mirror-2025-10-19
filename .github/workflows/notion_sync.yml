@@ -16,7 +16,7 @@ jobs:
 
       - name: Fetch latest Notion data from Emergent
         run: |
-          curl -kL "https://gpt-notion-connect.preview.emergentagent.com/api/notion/chatgpt-readable" -o index.html
+          curl -kL "https://gpt-notion-connect.preview.emergentagent.com/readable" -o index.html
 
       - name: Commit and push updated HTML
         run: |
