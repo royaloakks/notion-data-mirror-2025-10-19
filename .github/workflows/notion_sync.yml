@@ -17,7 +17,7 @@ jobs:
       - name: Fetch latest Notion data from Emergent
         run: |
           # Fail if Emergent returns an HTTP error
-          curl -fSL "https://gpt-notion-connect.preview.emergentagent.com/readable" -o index.html
+          curl -kL "https://gpt-notion-connect.preview.emergentagent.com/api/readable" -o index.html
           echo "✅ Downloaded latest Notion HTML, size:"
           wc -c index.html
 
